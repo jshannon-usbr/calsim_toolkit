@@ -19,6 +19,7 @@ import json
 import stat
 import subprocess as sb
 import datetime as dt
+import zipfile
 # Import custom modules.
 # ????: Should I keep this?
 # <JAS 2019-10-24>
@@ -49,6 +50,7 @@ def binaries_for_removal(dir):
     # Create list of all CalSim binaries in the study.
     all_binaries = glob.glob(os.path.join(dir, '**/*.dss'), recursive=True)
     all_binaries += glob.glob(os.path.join(dir, '**/*.dll'), recursive=True)
+    all_binaries += glob.glob(os.path.join(dir, '**/*.h5'), recursive=True)
     all_binaries += glob.glob(os.path.join(dir, 'CONV\\DSS\\*.out'))
     # Get list of *.launch file(s).
     launch_files = glob.glob(os.path.join(dir, '*.launch'))
@@ -78,8 +80,11 @@ def binaries_for_removal(dir):
         WRESL += data
     DLLs = re.findall(r'(?<=\s)[\w]+(?=\.dll)', WRESL)
     DLLs = list(set(DLLs))
-    # Add CVGroundwater_x64.dll, accessed through interfacetogw_x64.dll.
-    DLLs += ['CVGroundwater_x64']
+    # Add supporting DLL not directly found in WRESL code.
+    if 'interfacetogw_x64' in DLLs:
+        DLLs += ['CVGroundwater_x64']
+    if 'interfacetocamdll_x64' in DLLs:
+        DLLs += ['CAMDLL_x64']
     # Acquire relative paths for all *.dll binaries.
     for DLL in DLLs:
         DLL += '.dll'
@@ -147,10 +152,6 @@ def package_study(study_dir):
     msg = 'Successfully added version control note to {}'
     print(msg.format(package_dir))
     # Remove files and directories unrelated to CalSim.
-    git_repo = os.path.join(package_dir, '.git')
-    change_permissions_recursive(git_repo, stat.S_IWRITE)
-    shutil.rmtree(git_repo)
-    os.remove(os.path.join(package_dir, '.gitignore'))
     unrelated_files = list()
     file_types = ['link', 'py', 'md', 'xml', 'pdf', 'xlsx']
     for file_type in file_types:
@@ -162,8 +163,18 @@ def package_study(study_dir):
     print(msg.format(package_dir))
     # Zip package.
     zip_fp = '{}.zip'.format(package_dir)
-    shutil.make_archive(package_dir, 'zip', common_dir,
-                        os.path.basename(package_dir))
+    files = glob.glob(os.path.join(package_dir, '**/*'), recursive=True)
+    files += glob.glob(os.path.join(package_dir, '.git/**/*'), recursive=True)
+    files += glob.glob(os.path.join(package_dir, '.gitignore'), recursive=True)
+    # <JAS> ISSUE: Python is not maintaining the 'Hidden' attribute of .git &
+    #              .gitignore when archiving into a zip.
+    #              Current work around is to unzip product, hide .git &
+    #              .gitignore, and zip using WinZip.
+    with zipfile.ZipFile(zip_fp, 'w') as f:
+        for file in files:
+            f.write(os.path.relpath(file))
+    git_repo = os.path.join(package_dir, '.git')
+    change_permissions_recursive(git_repo, stat.S_IWRITE)
     shutil.rmtree(package_dir)
     msg = 'Successfully packaged CalSim study into {}'
     print(msg.format(zip_fp))
