@@ -45,7 +45,6 @@ def parse_filepaths(fp, studies=None):
             raise TypeError(msg)
         if not studies:
             studies = ['Alt{}'.format(i) for i in range(len(fp))]
-            studies[0] = 'Base'
         study_fps = list(zip(studies, fp))
     else:
         msg = 'Inputs provided are incompatible.'

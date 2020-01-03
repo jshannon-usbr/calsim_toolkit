@@ -65,18 +65,27 @@ def AggregateAnnual(df, eom=9):
     df_annual['DateTime'] = pd.to_datetime(df_annual['DateTime'], format='%Y')
     if return_tidy:
         df_annual['DateTime'] = df_annual['DateTime'].dt.year
+        df_annual = df_annual[cols].copy()
+        df_annual.rename({'DateTime': 'Water Year'}, axis=1, inplace=True)
     elif return_wide:
         df_annual = transform.tidy_to_wide(df_annual)
         df_annual.index = df_annual.index.year
+        df_annual.index.name = 'Water Year'
+        df_annual = df_annual[cols].copy()
     elif return_condense:
         df_annual = transform.tidy_to_condense(df_annual)
         df_annual.index = df_annual.index.year
-    df_annual = df_annual[cols].copy()
+        df_annual.index.name = 'Water Year'
+        df_annual = df_annual[cols].copy()
     # Return DataFrame of annual aggregation.
     return df_annual
 
 
 def PeriodMean(df, eom=9, stdev=False):
+    # Override `stdev`.
+    # NOTE: `stdev` will be available for future use.
+    # <JAS 2020-01-03>
+    stdev = False
     # Initialize DataFrame.
     df_copy = df.copy()
     # Transform DataFrame, if it is in tidy format.
@@ -85,7 +94,7 @@ def PeriodMean(df, eom=9, stdev=False):
         df_copy = transform.tidy_to_wide(df_copy)
         return_tidy = True
     # Pass DataFrame to `AggregateAnnual`.
-    df_mean = AggregateAnnual(df_copy, eom=9)
+    df_mean = AggregateAnnual(df_copy, eom=eom)
     # Calculate means.
     df_mean = df_mean.mean()
     # Transform back to tidy format, if applicable.
@@ -151,7 +160,7 @@ def MonthlyExceedence(df):
                            copy=True, name=col)
         df_list.append(s_temp)
     df_exceedence = pd.concat(df_list, axis=1)
-    df_exceedence.columns.set_names( df_copy.columns.names, inplace=True)
+    df_exceedence.columns.set_names(df_copy.columns.names, inplace=True)
     df_exceedence.index.name = 'Exceedence Probability'
     # Fill in missing values.
     df_exceedence.fillna(method='bfill', inplace=True)
@@ -166,7 +175,40 @@ def MonthlyExceedence(df):
     return df_exceedence
 
 
-def AnnualExceedence(df):
+def AnnualExceedence(df, eom=9):
+    # Initialize DataFrame.
+    df_copy = df.copy()
+    # Transform DataFrame, if it is in tidy format.
+    return_tidy = False
+    if validation.is_tidy(df_copy):
+        df_copy = transform.tidy_to_wide(df_copy)
+        return_tidy = True
+    # Pass DataFrame to `AggregateAnnual`.
+    df_excda = AggregateAnnual(df_copy, eom=eom)
+    # Create DataFrame of Exceedence ratios, ignoring missing values.
+    df_excd = df_excda.rank(method='first', ascending=False)
+    df_excd = df_excd / (df_excd.max() + 1)
+    # Concatenate Exceedence ratios and original values into single DataFrame.
+    df_list = list()
+    for col in df_excda.columns:
+        s_temp = pd.Series(df_excda[col].values, index=df_excd[col].values,
+                           copy=True, name=col)
+        df_list.append(s_temp)
+    df_exceedence = pd.concat(df_list, axis=1)
+    df_exceedence.columns.set_names(df_excda.columns.names, inplace=True)
+    df_exceedence.index.name = 'Exceedence Probability'
+    # Fill in missing values.
+    df_exceedence.fillna(method='bfill', inplace=True)
+    df_exceedence.fillna(method='ffill', inplace=True)
+    # Transform back to tidy format, if applicable.
+    if return_tidy:
+        num_lvls = list(range(df_exceedence.columns.nlevels))
+        df_exceedence = df_exceedence.stack(num_lvls)
+        df_exceedence.name = 'Value'
+        df_exceedence = df_exceedence.reset_index()
+    # Return DataFrame of annual aggregation.
+    return df_exceedence
+    
     pass
 
 

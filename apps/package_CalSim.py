@@ -55,6 +55,7 @@ def binaries_for_removal(dir):
     # Get list of *.launch file(s).
     launch_files = glob.glob(os.path.join(dir, '*.launch'))
     # Acquire *.dss files associated with *.launch file(s).
+    # <JAS> TODO: Use regex; modify to include '.h5' files.
     binary_files = list()
     for launch_fp in launch_files:
         with open(launch_fp) as f:
@@ -78,6 +79,7 @@ def binaries_for_removal(dir):
         with open(wresl_fp) as f:
             data = f.read()
         WRESL += data
+    # <JAS> TODO: Modify to capture '.dll' extension.
     DLLs = re.findall(r'(?<=\s)[\w]+(?=\.dll)', WRESL)
     DLLs = list(set(DLLs))
     # Add supporting DLL not directly found in WRESL code.

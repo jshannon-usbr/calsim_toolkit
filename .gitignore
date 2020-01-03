@@ -1,0 +1,29 @@
+# Folders #
+###########
+__pycache__/
+
+# Logs, Data, and Databases #
+#############################
+*.log
+*.csv
+*.dss
+*.dsc
+*.dsk
+*.sql
+*.sqlite
+*.db
+*.xlsx
+*.json
+
+# Compiled Source #
+###################
+*.dll
+*.pyc
+
+# Other #
+#########
+*.txt
+
+# Exceptions #
+##############
+!bin/heclib_x64.dll

@@ -97,6 +97,7 @@ def cat_to_study_fps(df):
     # Return list of tuples.
     return study_fps
 
+
 def tidy_to_wide(df):
     """
     Summary
