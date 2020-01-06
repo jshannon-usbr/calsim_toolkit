@@ -109,7 +109,7 @@ def remove_non_variables(code):
     return temp_code
 
 
-def generate_report(var_defines, var_inputs, var_depends):
+def generate_report(var, study, var_defines, var_inputs, var_depends):
     # Initialize variables.
     found_in_line = 'Line {} of {}'
     found_in_lines = 'Lines {} - {} of {}'
@@ -220,7 +220,8 @@ def main(study, var, output_file='', verbose=True):
                 var_depends += [(vr, file, lines, match.span())]
     # Write results to console and/or disk.
     if verbose or output_file:
-        results = generate_report(var_defines, var_inputs, var_depends)
+        results = generate_report(var, study, var_defines, var_inputs,
+                                  var_depends)
     if verbose:
         print(results)
     if output_file:

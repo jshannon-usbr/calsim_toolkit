@@ -101,7 +101,6 @@ def PlotAA(df, eom=9, show_plot=True):
     bar_start = 0.05
     var_width = 0.9
     bar_width = var_width / len(studies)
-    print(df_mean)
     # Plot data.
     for i, d in enumerate(df_list):
         # Ensure there is only one unit in dataset.
@@ -326,7 +325,7 @@ def PlotMA(df, show_plot=True):
         ax_cur.spines['right'].set_visible(False)
         ax_cur.spines['top'].set_visible(False)
         # Set legend.
-        ax_cur.legend(title='Study, Part F')
+        ax_cur.legend(title='Study, Part A')
         # Update current axis.
         cur_col += 1
         if cur_col >= n_col:
@@ -420,7 +419,7 @@ def PlotSP(df, show_plot=True):
         ax_cur.spines['right'].set_visible(False)
         ax_cur.spines['top'].set_visible(False)
         # Set legend.
-        ax_cur.legend(title='Study, Part F')
+        ax_cur.legend(title='Study, Part A')
         # Update current axis.
         cur_col += 1
         if cur_col >= n_col:
@@ -509,7 +508,7 @@ def PlotTS(df, show_plot=True):
         ax_cur.spines['right'].set_visible(False)
         ax_cur.spines['top'].set_visible(False)
         # Set legend.
-        ax_cur.legend(title='Study, Part F')
+        ax_cur.legend(title='Study, Part A')
         # Update current axis.
         cur_col += 1
         if cur_col >= n_col:

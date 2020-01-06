@@ -1,6 +1,7 @@
 # Folders #
 ###########
 __pycache__/
+.ipynb_checkpoints/
 
 # Logs, Data, and Databases #
 #############################
