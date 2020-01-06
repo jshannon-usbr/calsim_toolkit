@@ -36,14 +36,13 @@ jshannon@usbr.gov.
 Future Development
 ------------------
 Future development tasks will focus on the following priorities:
-
-    1. Add read/write capabilities with HDF5 files formatted for CalSim studies;
-    2. Add [pyhecdss](https://github.com/CADWRDeltaModeling/pyhecdss) as an alternative underlying dependency.
-    3. Write data to excel spreadsheets for use in many existing
-    post-processing tools;
-    4. Apply data filtering by DWR Water Year Type;
-    5. Develop plot types saved for future use;
-    5. Include post-processing techniques representing USBR interests;
-    6. Update `variable_dependencies` application to output `pandas` DataFrame; 
-    7. Expand documentation;
-    8. Draw plots with `plotly`.
+1. Add read/write capabilities with HDF5 files formatted for CalSim studies;
+2. Add [pyhecdss](https://github.com/CADWRDeltaModeling/pyhecdss) as an alternative underlying dependency.
+3. Write data to excel spreadsheets for use in many existing
+post-processing tools;
+4. Apply data filtering by DWR Water Year Type;
+5. Develop plot types saved for future use;
+6. Include post-processing techniques representing USBR interests;
+7. Update `variable_dependencies` application to output `pandas` DataFrame; 
+8. Expand documentation;
+9. Draw plots with `plotly`.
