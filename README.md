@@ -22,7 +22,7 @@ for information regarding typical usage.
 
 Dependencies
 ------------
-This module relies on the [usbr_py3dss](https://github.com/jshannon-usbr/usbr_py3dss)\
+This module relies on the [usbr_py3dss](https://github.com/jshannon-usbr/usbr_py3dss)
 for reading from and writing data to DSS files. This module also utilizes
 Python objects in many popular third party libraries that ship with
 [Anaconda for Python](https://www.anaconda.com/), such as [pandas](https://pandas.pydata.org/),
@@ -36,6 +36,7 @@ jshannon@usbr.gov.
 Future Development
 ------------------
 Future development tasks will focus on the following priorities:
+
     1. Add read/write capabilities with HDF5 files formatted for CalSim studies;
     2. Add [pyhecdss](https://github.com/CADWRDeltaModeling/pyhecdss) as an alternative underlying dependency.
     3. Write data to excel spreadsheets for use in many existing
