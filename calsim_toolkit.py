@@ -187,22 +187,23 @@ class CalSimAccessor(object):
     def to_excel():
         pass
 
-    def plot(self, type='', **kwargs):
+    def plot(self, plot_type='', **kwargs):
         # Initialize DataFrame.
         df = self._obj.copy()
         # Transform to wide format.
         df = df.cs.wide(verbose=False)
-        # Obtain plot.
-        if type.upper() == 'AA':
-            fig, ax = plots.PlotAA(df, **kwargs)
-        elif type.upper() == 'EX':
-            fig, ax = plots.PlotEX(df, **kwargs)
-        elif type.upper() == 'MA':
-            fig, ax = plots.PlotMA(df, **kwargs)
-        elif type.upper() == 'SP':
-            fig, ax = plots.PlotSP(df)
+        # Initialize methods.
+        if plot_type:
+            plot_type = plot_type.upper()
         else:
-            fig, ax = plots.PlotTS(df)
+            plot_type = 'TS'
+        plot_types = {'AA': plots.PlotAA,
+                      'EX': plots.PlotEX,
+                      'MA': plots.PlotMA,
+                      'SP': plots.PlotSP, 
+                      'TS': plots.PlotTS}
+        # Obtain plot.
+        fig, ax = plot_types[plot_type](df, **kwargs)
         # Return plot.
         return fig, ax
 
