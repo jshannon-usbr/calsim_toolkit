@@ -15,6 +15,8 @@ Notes
 # %% Import libraries
 # Import standard libraries.
 import os
+import warnings
+import argparse
 # Import third party libraries.
 import openpyxl as oxl
 import pandas as pd
@@ -25,12 +27,13 @@ def read_excel(fp):
     """
     Summary
     -------
-    Read the values and formulas of an excel worbook into a `pandas` DataFrame.
+    Read the values and formulas of an excel workbook into a `pandas`
+    DataFrame.
 
     Parameters
     ----------
     fp : path
-        File path to *.xlsx or *.xls workbook.
+        Absolute or relative file path to *.xlsx or *.xls workbook.
 
     Returns
     -------
@@ -40,9 +43,7 @@ def read_excel(fp):
 
     """
     # Initialize variables.
-    col = ['Sheet', 'Row', 'Column', 'Value']
-    wb_content = pd.DataFrame(columns=col)
-    i = 0
+    keys = ['Sheet', 'Row', 'Column', 'Value']
     # Open workbook.
     if os.path.exists(fp):
         wb = oxl.load_workbook(filename=fp)
@@ -50,24 +51,58 @@ def read_excel(fp):
         msg = '{} not found.'.format(fp)
         raise OSError(msg)
     # For each sheet, get cell range and each cell value.
+    records = list()
     for sheet in wb:
         sheet_name = sheet.title
         for row in sheet.rows:
             for cell in row:
                 if cell.value:
-                    record = [sheet_name, cell.row, cell.column, cell.value]
-                    wb_content.loc[i] = record
-                    i += 1
+                    values = [sheet_name, cell.row, cell.column, cell.value]
+                    record = dict(zip(keys, values))
+                    records.append(record)
+    # Construct DataFrame.
+    wb_content = pd.DataFrame(records, columns=keys)
     # Return dictionary of information.
     return wb_content
 
 
 def compare_excel(fp_original, fp_modified):
+    print(fp_original, fp_modified, sep='\n')
+    print('The function `compare_excel` is currently unavailable')
     pass
 
 
 # %% Execute script.
+# Suppress warnings from `openpyxl`.
+warnings.simplefilter('ignore')
+# Parse command line arguments.
 if __name__ == '__main__':
-    # TODO: Provide command line inputs via `argparse` library,
-    #       https://docs.python.org/3/library/argparse.html
-    pass
+    # Initialize argument parser.
+    intro = '''
+            The module summarizes contents of an Excel file (*.xlsx or *.xls)
+            and compares the differences with an alternative excel file. If no
+            path is provided in `fp1`, then a summary of content is produced
+            with the `read_excel` function; otherwise, comparative differences
+            with `fp0` are summarized with `compare_excel`.
+            '''
+    parser = argparse.ArgumentParser(description=intro)
+    # Add positional arguments to parser.
+    parser.add_argument('fp0', metavar='fp0', type=str, nargs='?',
+                        help='File path to *.xlsx or *.xls for review.')
+    # Add optional arguments.
+    parser.add_argument('-f', '--fp1', metavar='fp1', type=str,
+                        nargs='?',
+                        help='''
+                             File path to *.xlsx or *.xls for comparison to
+                             `fp0`.
+                             ''')
+    # Parse arguments.
+    args = parser.parse_args()
+    fp0 = args.fp0.strip('"')
+    fp1 = args.fp1.strip('"') if args.fp1 else None
+    # Pass arguments to function.
+    if args.fp1:
+        compare_excel(fp0, fp1)
+    else:
+        df = read_excel(fp0)
+        print(df)

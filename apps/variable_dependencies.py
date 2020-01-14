@@ -10,7 +10,7 @@ An engineer can utilize the variable dependency tool either through the command
 line or via Python import. From the command line, pass in additional system
 arguments to the Python executable.
 
->>> python calsim_toolkit/apps/variable_dependencies.py 'CalSim3' S_SHSTA
+>>> python calsim_toolkit/apps/variable_dependencies.py CalSim3 S_SHSTA
 Variable Dependency Results for S_SHSTA in study diretory CalSim3...
 
 To import and used the tool, call the `main` function.
@@ -27,6 +27,7 @@ import os
 import sys
 import glob
 import re
+import argparse
 
 
 # %% Define functions.
@@ -126,6 +127,12 @@ def remove_non_variables(code):
 
 
 def generate_report(var, study, var_defines, var_inputs, var_depends):
+    """
+    Summary
+    -------
+    Internal function to generate report.
+
+    """
     # Initialize variables.
     found_in_line = 'Line {} of {}'
     found_in_lines = 'Lines {} - {} of {}'
@@ -178,10 +185,42 @@ def generate_report(var, study, var_defines, var_inputs, var_depends):
 
 
 def main(study, var, output_file='', verbose=True):
+    """
+    Summary
+    -------
+    Function to note CalSim mixed integer linear program dependencies related
+    to a given variable.
+
+    Parameters
+    ----------
+    study : path
+        Absolute or relative path to study directory.
+    var : string
+        Variable of interest to determine dependencies (e.g. "S_SHSTA").
+    output_file : path, default '', optional
+        Absolute or relative file path for writing dependency report to disk.
+        If no path is provided, the report is not written to disk.
+    verbose : boolean, default True, optional
+        Option to display contents of dependency report to console.
+
+    Returns
+    -------
+    results_dict : dictionary
+        A dictionary with the following entries:
+            - 'defined' : Location in which the variable of interest `var` is
+                          defined in the `study`.
+            - 'inputs' : Locations of variables that feed into `var`.
+            - 'dependencies' : Locations of variables that depend are `var` as
+                               an input.
+
+    """
     # Initialize variables.
     re_var = r'\b{}\b'.format(var)
     re_words = r'\b\w+\b'
     # Identify *.wresl in the given study.
+    if not os.path.exists(study):
+        msg = '{} not found.'.format(study)
+        raise OSError(msg)
     wresl_files = glob.glob(os.path.join(study, '**/*.wresl'), recursive=True)
     # Read all file content into a dictionary.
     wresl_code = dict()
@@ -198,6 +237,9 @@ def main(study, var, output_file='', verbose=True):
             lines = line_numbers(match, v)
             file = os.path.relpath(k, study)
             var_defines += [(var, file, lines, match.span())]
+    if not var_defines:
+        print('Variable {} not found in {}.'.format(var, study))
+        return None
     # Parse variables that feed into given variable.
     statement_inputs = list()
     for var_define in var_defines:
@@ -251,11 +293,41 @@ def main(study, var, output_file='', verbose=True):
 
 
 # %% Execute script.
+# Parse command line arguments.
 if __name__ == '__main__':
-    study = sys.argv[1][1:-1]
-    var = sys.argv[2]
-    try:
-        output_file = sys.argv[3]
-    except IndexError:
-        output_file = ''
-    main(study, var, output_file)
+    # Initialize argument parser.
+    intro = '''
+            For a given variable, list variables that are dependent on it and
+            variables that feed directly into it.
+            '''
+    parser = argparse.ArgumentParser(description=intro)
+    # Add positional arguments to parser.
+    parser.add_argument('study', metavar='study', type=str, nargs='?',
+                        help='Absolute or relative path to study directory.')
+    parser.add_argument('var', metavar='variable', type=str, nargs='?',
+                        help='''
+                             Variable of interest to determine dependencies
+                             (e.g. "S_SHSTA").
+                             ''')
+    # Add optional arguments.
+    parser.add_argument('-o', '--outfile', metavar='output file', type=str,
+                        nargs='?', default='',
+                        help='''
+                             Absolute or relative file path for writing
+                             dependency report to disk. If no path is provided,
+                             the report is not written to disk.
+                             ''')
+    parser.add_argument('-v', '--verbose', metavar='verbosity', type=bool,
+                        nargs='?', default=True,
+                        help='''
+                             Option to display contents of dependency report to
+                             console.
+                             ''')
+    # Parse arguments.
+    args = parser.parse_args()
+    study = args.study.strip('"')
+    var = args.var.strip('"')
+    output_file = args.outfile.strip('"')
+    verbose = args.verbose
+    # Pass arguments to function.
+    main(study, var, output_file=output_file, verbose=verbose)

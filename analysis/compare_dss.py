@@ -5,6 +5,8 @@ The module compares and reports the differences between two DSS files.
 
 """
 # %% Import libraries
+# Import standard libraries.
+import argparse
 # Import third party libraries.
 import pandas as pd
 # Import custom modules.
@@ -14,7 +16,7 @@ from tools.transform import split_pathname, tidy_to_wide
 
 
 # %% Define functions.
-def compare_dss(fp_alt0, fp_alt1):
+def compare_dss(fp_alt0, fp_alt1, output_file='', verbose=False):
     """
     Summary
     -------
@@ -23,6 +25,30 @@ def compare_dss(fp_alt0, fp_alt1):
     Notes
     -----
     1. This procedure is optimized for CalSim3 studies.
+
+    Parameters
+    ----------
+    fp_alt0 : path
+        Absolute or relative file path to baseline *.dss file.
+    fp_alt1 : path
+        Absolute or relative file path to alternative *.dss file.
+    output_file : path, default '', optional
+        Absolute or relative file path for writing comparison report to disk.
+        If no path is provided, the report is not written to disk.
+    verbose : boolean, default True, optional
+        Option to display contents of comparison report to console.
+
+    Returns
+    -------
+    removed_variables : list
+        List of Part B variables removed from `fp_alt1` with respect to
+        `fp_alt0`.
+    added_variables : list
+        List of Part B variables added to `fp_alt1` with respect to
+        `fp_alt0`.
+    data_change : list
+        List of common Part B variables time series with differences between
+        `fp_alt0`and `fp_alt1`.
 
     """
     # Construct catalog of data records.
@@ -52,16 +78,53 @@ def compare_dss(fp_alt0, fp_alt1):
     data_change = list(min_data_change.loc[filter_common, 'Part B'].unique())
     # Output report, if applicable.
     # <JAS> TODO: Generate a report format.
-    if False:
+    if output_file:
         pass
+    if verbose:
+        print('Report functionality currently unavailable.')
     # Return data differences.
     return removed_variables, added_variables, data_change
 
 
 # %% Execute script.
+# Parse command line arguments.
 if __name__ == '__main__':
-    # TODO: Provide command line inputs via `argparse` library,
-    #       https://docs.python.org/3/library/argparse.html
-    fp_alt0 = '../../CalSim3/common/DSS/CS3L2015SVClean_wHD-New.dss'
-    fp_alt1 = '../../Incoming/2020-01-08_FromDWR_DCR/DCRBL_CS3_20191228/common/DSS/CS3L2015SVClean.dss'
-    compare_dss(fp_alt0, fp_alt1)
+    # Initialize argument parser.
+    intro = '''
+            The module compares and reports the differences between two DSS
+            files.
+            '''
+    parser = argparse.ArgumentParser(description=intro)
+    # Add positional arguments to parser.
+    parser.add_argument('fp_alt0', metavar='fp_alt0', type=str, nargs='?',
+                        help='''
+                             Absolute or relative file path to baseline *.dss
+                             file.
+                             ''')
+    parser.add_argument('fp_alt1', metavar='fp_alt1', type=str, nargs='?',
+                        help='''
+                             Absolute or relative file path to alternative
+                             *.dss file.
+                             ''')
+    # Add optional arguments.
+    parser.add_argument('-o', '--outfile', metavar='output file', type=str,
+                        nargs='?', default='',
+                        help='''
+                             Absolute or relative file path for writing
+                             comparison report to disk. If no path is provided,
+                             the report is not written to disk.
+                             ''')
+    parser.add_argument('-v', '--verbose', metavar='verbosity', type=bool,
+                        nargs='?', default=True,
+                        help='''
+                             Option to display contents of comparison report to
+                             console.
+                             ''')
+    # Parse arguments.
+    args = parser.parse_args()
+    fp0 = args.fp_alt0.strip('"')
+    fp1 = args.fp_alt1.strip('"')
+    output_file = args.outfile.strip('"')
+    verbose = args.verbose
+    # Pass arguments to function.
+    _ = compare_dss(fp0, fp1, output_file=output_file, verbose=verbose)
