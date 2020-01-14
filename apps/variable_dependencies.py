@@ -4,6 +4,22 @@ Summary
 For a given variable, list variables that are dependent on it and variables
 that feed directly into it.
 
+Examples
+--------
+An engineer can utilize the variable dependency tool either through the command
+line or via Python import. From the command line, pass in additional system
+arguments to the Python executable.
+
+>>> python calsim_toolkit/apps/variable_dependencies.py 'CalSim3' S_SHSTA
+Variable Dependency Results for S_SHSTA in study diretory CalSim3...
+
+To import and used the tool, call the `main` function.
+
+>>> from calsim_toolkit.apps import variable_dependencies as vard
+>>> _ = vard.main('CalSim3', 'S_SHSTA')
+>>> run_CalSim.run_CalSim(lf)
+Variable Dependency Results for S_SHSTA in study diretory CalSim3...
+
 """
 # %% Import libraries.
 # Import standard libraries.

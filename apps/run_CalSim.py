@@ -1,8 +1,15 @@
 """
 Summary
 -------
-The purpose of this module contains applications for the
-`calsim_toolkit` library.
+This application allows a user to run a CalSim study in Python.
+
+Example
+-------
+Execute the following code to run a CalSim3 study.
+
+>>> from calsim_toolkit.apps import run_CalSim
+>>> lf = 'CalSim3/Existing.launch'
+>>> run_CalSim.run_CalSim(lf)
 
 """
 # %% Import libraries.
@@ -15,6 +22,12 @@ import subprocess as sb
 
 # %% Define functions.
 def clean_WRIMS_dir(WRIMS):
+    """
+    Summary
+    -------
+    Function to clean the pathname for WRIMS in a readable manner for Python.
+
+    """
     cleaned_WRIMS = WRIMS
     if WRIMS.startswith("'") or WRIMS.startswith('"'):
         cleaned_WRIMS = cleaned_WRIMS[1:]
@@ -25,6 +38,22 @@ def clean_WRIMS_dir(WRIMS):
 
 
 def WRIMS_config():
+    """
+    Summary
+    -------
+    Function to configure Python's connection to WRIMS.
+
+    Returns
+    -------
+    WRIMS : path
+        Configured directory path of WRIMS application.
+    launch_group_file : path
+        File path of grouped launch files as input into WRIMS *.bat
+        applications.
+    settings_file : path
+        File path to settings for WRIMS application.
+
+    """
     # Obtain WRIMS application directory.
     this_dir = os.path.dirname(os.path.abspath(__file__))
     config = os.path.join(this_dir, 'wrims.json')
@@ -71,6 +100,29 @@ def WRIMS_settings(settings_file, solver='CBC', memory=4096, cycles=False,
     -------
     A function to write settings for WRIMS.
 
+    Parameters
+    ----------
+    settings_file : path
+        File path to settings for WRIMS application; an return of
+        `WRIMS_config`.
+    solver : string, default 'CBC', optional
+        CalSim Solver; choose either 'xa' or 'cbc'. This variable is not case
+        sensitive.
+    memory : integer, default 4096, optional
+        Memory allocated for WRIMS to utilize, in Megabytes (MB); provide a
+        multiple of 64 for efficient use of 64-bit computer resources.
+    cycles : boolean, default False, optional
+        Option to write CalSim cycle solutions to output *.dss file.
+    cycle_list : list of integers, default [], optional,
+        List of specific CalSim cycle solutions to write to output *.dss file.
+        If list is empty and `cycles` = True, then all cycle solutions are
+        written to output *.dss file.
+
+    Returns
+    -------
+    _ : int
+        The value of 0 is returned to indicate success.
+
     """
     # Initialize variables.
     solver_options = ['XA', 'CBC']
@@ -115,30 +167,31 @@ def WRIMS_settings(settings_file, solver='CBC', memory=4096, cycles=False,
 
 def run_CalSim(lf, run_parallel=False, run_bat=True, **kwargs):
     # TODO: Add options to modify launch file.
-    r"""
+    """
     Summary
     -------
     A function to run CalSim studies through WRIMS .bat files.
 
     Parameters
     ----------
-    lf : list of string
-        List of CalSim .launch paths.
-    solver : str, default 'xa', optional
-        CalSim Solver; choose either 'xa' or 'cbc'. This variable is not case
-        sensitive.
+    lf : path or list of paths
+        Absolute or relative file path(s) to CalSim *.launch file(s). If a
+        study directory is provided, this function will search for all *.launch
+        files in the directory, but not in any subdirectories.
     run_parallel : bool, default False, optional
         Option to run multiple CalSim studies in parallel. Default option is to
         run CalSim studies in sequential order.
     run_bat : bool, default True, optional
         Option to not run CalSim studies. This option is intended for debugging
         the function.
+    **kwargs : optional
+        Keyword arguments to pass to the `WRIMS_settings` function.
 
     Returns
     -------
-    None
-        Nothing is return. A message will print to console to indicate when
-        processes are complete.
+    _ : int
+        The value of 0 is returned to indicate success. Intermediate messages
+        are printed to console to indicate when processes are complete.
 
     """
     # TODO: Start here to re-write code!

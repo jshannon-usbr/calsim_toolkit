@@ -20,11 +20,19 @@ Importing the module.
 
 >>> import calsim_toolkit as cs
 
-Notes
------
-Below are module project notes:
+Execute the following code to run a CalSim3 study with Python.
 
-    1. This project is NOT version controlled with Git.
+>>> from calsim_toolkit.apps import run_CalSim
+>>> lf = 'CalSim3/Existing.launch'
+>>> run_CalSim.run_CalSim(lf)
+
+Use the variable dependency tool to understand linear program definitions in a
+CalSim study.
+
+>>> from calsim_toolkit.apps import variable_dependencies as vard
+>>> _ = vard.main('CalSim3', 'S_SHSTA')
+>>> run_CalSim.run_CalSim(lf)
+Variable Dependency Results for S_SHSTA in study diretory CalSim3...
 
 Future Development
 ------------------
@@ -200,7 +208,7 @@ class CalSimAccessor(object):
         plot_types = {'AA': plots.PlotAA,
                       'EX': plots.PlotEX,
                       'MA': plots.PlotMA,
-                      'SP': plots.PlotSP, 
+                      'SP': plots.PlotSP,
                       'TS': plots.PlotTS}
         # Obtain plot.
         fig, ax = plot_types[plot_type](df, **kwargs)
