@@ -18,6 +18,13 @@ import os
 import glob
 import json
 import subprocess as sb
+import argparse
+# Import custom modules.
+try:
+    import custom_modules
+    from tools.variables import external_apps_config
+except(ModuleNotFoundError):
+    from ..tools.variables import external_apps_config
 
 
 # %% Define functions.
@@ -55,34 +62,7 @@ def WRIMS_config():
 
     """
     # Obtain WRIMS application directory.
-    this_dir = os.path.dirname(os.path.abspath(__file__))
-    config = os.path.join(this_dir, 'wrims.json')
-    if os.path.exists(config):
-        with open(config, 'r') as f:
-            data = json.load(f)
-        WRIMS = data['WRIMS']
-        if not os.path.exists(WRIMS):
-            err_msg = ('"wrims.json" must contain a valid existing directory.'
-                       ' Please, provide a valid directory containing the'
-                       ' WRIMS application. The directory will be saved for'
-                       ' future use:')
-            print(err_msg)
-            raw_WRIMS = input()
-            if not raw_WRIMS: raise (RuntimeError)
-            WRIMS = clean_WRIMS_dir(raw_WRIMS)
-            data['WRIMS'] = WRIMS
-            with open(config, 'w') as f:
-                json.dump(data, f)
-    else:
-        msg = ('Please, provide a valid directory containing the WRIMS'
-               ' application. The directory will be saved for future use:')
-        print(msg)
-        raw_WRIMS = input()
-        if not raw_WRIMS: raise (RuntimeError)
-        WRIMS = clean_WRIMS_dir(raw_WRIMS)
-        data = {'WRIMS': WRIMS}
-        with open(config, 'w') as f:
-            json.dump(data, f)
+    WRIMS = external_apps_config(app='wrims')
     # Obtain launch group file.
     launch_group_file = os.path.join(WRIMS, r'batchrun/LaunchFileGroup.lfg')
     launch_group_file = os.path.realpath(launch_group_file)
@@ -165,12 +145,12 @@ def WRIMS_settings(settings_file, solver='CBC', memory=4096, cycles=False,
     return 0
 
 
-def run_CalSim(lf, run_parallel=False, run_bat=True, **kwargs):
+def main(lf, run_parallel=False, run_bat=True, **kwargs):
     # TODO: Add options to modify launch file.
     """
     Summary
     -------
-    A function to run CalSim studies through WRIMS .bat files.
+    A function to run CalSim studies through WRIMS *.bat files.
 
     Parameters
     ----------
@@ -265,6 +245,73 @@ def run_CalSim(lf, run_parallel=False, run_bat=True, **kwargs):
 
 # %% Execute script.
 if __name__ == '__main__':
-    msg = ('This module is intended to be imported for use into another'
-           ' module. It is not intended to be run as a __main__ file.')
-    raise RuntimeError(msg)
+    # Initialize argument parser.
+    intro = '''
+            This module runs CalSim studies in Python using the WRIMS *.bat
+            files.
+            '''
+    parser = argparse.ArgumentParser(description=intro)
+    # Add positional arguments to parser.
+    parser.add_argument('lf', metavar='launch files', type=str, nargs='+',
+                        help='''
+                             Absolute or relative file path(s) to CalSim
+                             *.launch file(s). If a study directory is
+                             provided, this function will search for all
+                             *.launch files in the directory, but not in any
+                             subdirectories.
+                             ''')
+    # Add optional arguments.
+    parser.add_argument('-p', '--parallel', action='store_true', default=False,
+                        help='''
+                             Option to run multiple CalSim studies in parallel.
+                             Default option is to run CalSim studies in
+                             sequential order.
+                             ''')
+    parser.add_argument('-n', '--no-run_bat', dest='run_bat',
+                        action='store_false', default=True,
+                        help='''
+                             Option to not run CalSim studies. This option is
+                             intended for debugging the function.
+                             ''')
+    parser.add_argument('-s', '--solver', metavar='solver', type=str, nargs='?',
+                        default='cbc',
+                        help='''
+                             CalSim Solver; choose either 'xa' or 'cbc'. This
+                             variable is not case sensitive.
+                             ''')
+    parser.add_argument('-m', '--memory', metavar='memory', type=int,
+                        nargs='?', default=4096,
+                        help='''
+                             Memory allocated for WRIMS to utilize, in
+                             Megabytes (MB); provide a multiple of 64 for
+                             efficient use of 64-bit computer resources.
+                             ''')
+    parser.add_argument('-c', '--cycles', action='store_true', default=False,
+                        help='''
+                             Option to write CalSim cycle solutions to output
+                             *.dss file.
+                             ''')
+    parser.add_argument('-l', '--cycle_list', metavar='cycle list', type=int,
+                        nargs='*', default=[],
+                        help='''
+                             List of specific CalSim cycle solutions to write
+                             to output *.dss file. If list is empty and
+                             `cycles` = True, then all cycle solutions are
+                             written to output *.dss file.
+                             ''')
+    # Parse arguments.
+    args = parser.parse_args()
+    lf = args.lf
+    for i, f in enumerate(lf):
+        fp = f.strip('"')
+        lf[i] = fp
+    lf = lf[0] if len(lf) == 1 else lf
+    run_parallel = args.parallel
+    run_bat = args.run_bat
+    solver = args.solver.strip('"')
+    memory = args.memory
+    cycles = args.cycles
+    cycle_list = args.cycle_list
+    # Pass arguments to function.
+    _ = main(lf, run_parallel=run_parallel, run_bat=run_bat, solver=solver,
+             memory=memory, cycles=cycles, cycle_list=cycle_list)
