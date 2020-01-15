@@ -66,7 +66,7 @@ def read_excel(fp):
     return wb_content
 
 
-def compare_excel(fp_original, fp_modified):
+def main(fp_original, fp_modified):
     print(fp_original, fp_modified, sep='\n')
     print('The function `compare_excel` is currently unavailable')
     pass
@@ -83,7 +83,7 @@ if __name__ == '__main__':
             and compares the differences with an alternative excel file. If no
             path is provided in `fp1`, then a summary of content is produced
             with the `read_excel` function; otherwise, comparative differences
-            with `fp0` are summarized with `compare_excel`.
+            with `fp0` are summarized with `main`.
             '''
     parser = argparse.ArgumentParser(description=intro)
     # Add positional arguments to parser.
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     fp1 = args.fp1.strip('"') if args.fp1 else None
     # Pass arguments to function.
     if args.fp1:
-        compare_excel(fp0, fp1)
+        main(fp0, fp1)
     else:
         df = read_excel(fp0)
         print(df)

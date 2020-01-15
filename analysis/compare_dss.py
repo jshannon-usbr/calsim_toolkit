@@ -10,13 +10,17 @@ import argparse
 # Import third party libraries.
 import pandas as pd
 # Import custom modules.
-import custom_modules
-from tools.io import read_dss_catalog, read_dss
-from tools.transform import split_pathname, tidy_to_wide
+try:
+    import custom_modules
+    from tools.io import read_dss_catalog, read_dss
+    from tools.transform import split_pathname, tidy_to_wide
+except(ModuleNotFoundError):
+    from ..tools.io import read_dss_catalog, read_dss
+    from ..tools.transform import split_pathname, tidy_to_wide
 
 
 # %% Define functions.
-def compare_dss(fp_alt0, fp_alt1, output_file='', verbose=False):
+def main(fp_alt0, fp_alt1, output_file='', verbose=False):
     """
     Summary
     -------
@@ -127,4 +131,4 @@ if __name__ == '__main__':
     output_file = args.outfile.strip('"')
     verbose = args.verbose
     # Pass arguments to function.
-    _ = compare_dss(fp0, fp1, output_file=output_file, verbose=verbose)
+    _ = main(fp0, fp1, output_file=output_file, verbose=verbose)
