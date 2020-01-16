@@ -207,7 +207,7 @@ def PlotEX(df, eom=None, show_plot=True):
         for c in col_var:
             sr_plot = df_exc[c]
             label_c = '{} {}'.format(*c[:2])
-            ax_cur.plot(sr_plot, label=label_c, alpha=0.7)
+            ax_cur.plot(sr_plot, label=label_c, linewidth=1.0, alpha=0.7)
         # Set plot title.
         if eom:
             month_name = dt.date(1900, eom, 1).strftime('%B')
@@ -401,7 +401,7 @@ def PlotSP(df, show_plot=True):
         else:
             ax_cur = ax[cur_row, cur_col]
         # Plot study results against each study.
-        for c in col_var[1:]:
+        for c in col_var:
             label_c = '{} {}'.format(*c[:2])
             vals = df_var[c].values
             score = r2_score(base, vals)
