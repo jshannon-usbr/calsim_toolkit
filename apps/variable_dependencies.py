@@ -262,6 +262,10 @@ def main(study, var, output_file='', verbose=True):
                 file = os.path.relpath(k, study)
                 var_inputs += [(s, file, lines, match.span())]
     # Find all locations given variable is used.
+    ###########################################################################
+    ###########################################################################
+    # TODO: Speed up this section of code to the hash break because it is
+    #       responsible for roughly 95% of runtime.
     var_depends = list()
     for k, v in wresl_code.items():
         temp_code = remove_cases(remove_comments(v))
@@ -276,6 +280,8 @@ def main(study, var, output_file='', verbose=True):
                 lines = line_numbers(match, v)
                 file = os.path.relpath(k, study)
                 var_depends += [(vr, file, lines, match.span())]
+    ###########################################################################
+    ###########################################################################
     # Write results to console and/or disk.
     if verbose or output_file:
         results = generate_report(var, study, var_defines, var_inputs,
@@ -317,11 +323,10 @@ if __name__ == '__main__':
                              dependency report to disk. If no path is provided,
                              the report is not written to disk.
                              ''')
-    parser.add_argument('-v', '--verbose', metavar='verbosity', type=bool,
-                        nargs='?', default=True,
+    parser.add_argument('-s', '--silent', dest='verbose', action='store_false',
+                        default=True,
                         help='''
-                             Option to display contents of dependency report to
-                             console.
+                             Suppress displaying dependency report to console.
                              ''')
     # Parse arguments.
     args = parser.parse_args()
@@ -330,4 +335,4 @@ if __name__ == '__main__':
     output_file = args.outfile.strip('"')
     verbose = args.verbose
     # Pass arguments to function.
-    main(study, var, output_file=output_file, verbose=verbose)
+    _ = main(study, var, output_file=output_file, verbose=verbose)
