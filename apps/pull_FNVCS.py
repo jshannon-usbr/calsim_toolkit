@@ -149,4 +149,4 @@ if __name__ == '__main__':
     vcs = args.vcs.strip('"')
     verbose = args.verbose
     # Pass arguments to function.
-    _ = main(NVCS, vcs, verbose=True)
+    _ = main(NVCS, vcs, verbose=verbose)
