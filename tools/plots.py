@@ -217,7 +217,11 @@ def PlotEX(df, eom=None, show_plot=True):
             ax_cur.set_title('Exceedence Plot of {} (All Months)'.format(var))
         # Modify x-axis and y-axis.
         label_c = set(df_exc.columns.get_level_values('Part C'))
-        label_u = set(df_exc.columns.get_level_values('Data Type'))
+        _unit = df_exc.columns.get_level_values('Units')
+        _dtyp = df_exc.columns.get_level_values('Data Type')
+        unit_d = list(zip(_unit, _dtyp))
+        combo_unit = [' '.join(i) for i in unit_d]
+        label_u = set(combo_unit)
         ax_cur.set_ylabel('{} ({})'.format(r'/'.join(label_c),
                                            r'/'.join(label_u)))
         ax_cur.set_ylim(bottom=y_min, top=y_max)
@@ -316,7 +320,11 @@ def PlotMA(df, show_plot=True):
         tick_labels = list(df_ave.index)
         ax_cur.set_xticklabels(tick_labels)
         label_c = set(df_var.columns.get_level_values('Part C'))
-        label_u = set(df_var.columns.get_level_values('Data Type'))
+        _unit = df_var.columns.get_level_values('Units')
+        _dtyp = df_var.columns.get_level_values('Data Type')
+        unit_d = list(zip(_unit, _dtyp))
+        combo_unit = [' '.join(i) for i in unit_d]
+        label_u = set(combo_unit)
         ax_cur.set_ylabel('{} ({})'.format(r'/'.join(label_c),
                                            r'/'.join(label_u)))
         ax_cur.set_ylim(bottom=y_min, top=y_max)
@@ -412,7 +420,11 @@ def PlotSP(df, show_plot=True):
         ax_cur.set_title('Scatter Plot of {}'.format(var))
         # Modify x-axis and y-axis.
         label_c = set(df_var.columns.get_level_values('Part C'))
-        label_u = set(df_var.columns.get_level_values('Data Type'))
+        _unit = df_var.columns.get_level_values('Units')
+        _dtyp = df_var.columns.get_level_values('Data Type')
+        unit_d = list(zip(_unit, _dtyp))
+        combo_unit = [' '.join(i) for i in unit_d]
+        label_u = set(combo_unit)
         ax_cur.set_ylabel('{} ({})'.format(r'/'.join(label_c),
                                            r'/'.join(label_u)))
         ax_cur.set_xlabel(var)
@@ -500,7 +512,11 @@ def PlotTS(df, show_plot=True):
         ax_cur.set_title('Time Series Plot of {}'.format(var))
         # Modify x-axis and y-axis.
         label_c = set(df_var.columns.get_level_values('Part C'))
-        label_u = set(df_var.columns.get_level_values('Data Type'))
+        _unit = df_var.columns.get_level_values('Units')
+        _dtyp = df_var.columns.get_level_values('Data Type')
+        unit_d = list(zip(_unit, _dtyp))
+        combo_unit = [' '.join(i) for i in unit_d]
+        label_u = set(combo_unit)
         ax_cur.set_ylabel('{} ({})'.format(r'/'.join(label_c),
                                            r'/'.join(label_u)))
         ax_cur.set_ylim(bottom=y_min, top=y_max)
