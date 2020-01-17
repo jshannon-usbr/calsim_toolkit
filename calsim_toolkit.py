@@ -223,8 +223,36 @@ class CalSimAccessor(object):
         # Return filtered DataFrame.
         return df_filtered
 
-    def wateryear(self):
-        pass
+    def wyt(self, indicator, idx='SACindex'):
+        # Initialize DataFrame and parameters.
+        df = self._obj.copy()
+        rtn_tidy = False
+        # Check DataFrame is in tidy format.
+        if validation.is_tidy(df):
+            rtn_tidy = True
+            df = df.cs.wide(verbose=False)
+        # Obtain water year type Series based on `idx`.
+        s_wyt = variables.water_year_types(idx)
+        # Transform index from years to annual February dates.
+        s_wyt.index = pd.to_datetime(s_wyt.index, format='%Y')
+        s_wyt = s_wyt.shift(2, freq='M')
+        # Reindex Series based on DataFrame Index.
+        s_wyt_dtype = s_wyt.dtype
+        s_date = s_wyt.index.min()
+        e_date = df.index.max()
+        new_idx = pd.date_range(start=s_date, end=e_date, freq='M')
+        s_wyt = s_wyt.reindex(new_idx)
+        s_wyt.fillna(method='ffill', inplace=True)
+        s_wyt = s_wyt.reindex(df.index).astype(s_wyt_dtype)
+        # Filter Series by provided `indicator`.
+        s_wyt = s_wyt.loc[s_wyt == indicator]
+        # Reindex DataFrame with filtered Series index.
+        df = df.reindex(s_wyt.index)
+        # Transform to tidy format, if applicable.
+        if rtn_tidy:
+            df = df.cs.tidy(verbose=False)
+        # Return DataFrame.
+        return df
 
 
 # %% Execute code.

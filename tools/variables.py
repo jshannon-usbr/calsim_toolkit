@@ -10,6 +10,9 @@ The purpose of this module is to provide variables needed for the
 import os
 import sys
 import json
+import shutil
+# Import third party libraries.
+import pandas as pd
 
 
 # %% Define functions.
@@ -92,6 +95,54 @@ def external_apps_config(app=''):
         app_path = app_ref[app.lower()]
     # Return application reference.
     return app_path
+
+
+def water_year_types(idx='SACindex'):
+    """
+    Summary
+    -------
+    Function to produce a `pandas` Series of water year types given index.
+
+    Parameters
+    ----------
+    idx: string, default 'SACindex', optional
+        The desired index in wytypes.table.
+
+    Returns
+    -------
+    s : pandas.Series
+        A `pandas` Series object of water year types.
+
+    Notes
+    -----
+    1. This function requires a version of CONV/Run/Lookup/wytypes.table to be
+       saved in data folder of the `calsim_toolkit`. A prompt will notify the
+       user if the wytypes.table file is not found.
+
+    """
+    # Ensure ../data/wytypes.table exists.
+    fn = 'wytypes.table'
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.join(os.path.dirname(this_dir), 'data')
+    wyt_fp = os.path.join(data_dir, fn)
+    if not os.path.exists(data_dir):
+        os.mkdir(data_dir)
+    if not os.path.exists(wyt_fp):
+        msg = ('The file "wytypes.table" is missing. Please, provide a valid'
+               ' path to "wytypes.table" in a CalSim study.')
+        print(msg)
+        wyt_pth = input().strip('"')
+        if os.path.exists(wyt_pth) and os.path.split(wyt_pth)[1] == fn:
+            shutil.copyfile(wyt_pth, wyt_fp)
+        else:
+            err_msg = 'Not a valid path for "wytypes.table".'
+            raise OSError(err_msg)
+    # Read Table into DataFrame and select Series by Index.
+    df = pd.read_csv(wyt_fp, comment='!', sep='\t', header=1,
+                     index_col='WATERYEAR')
+    s = df[idx]
+    # Return the Series of water year types.
+    return s
 
 
 # %% Execute script.
