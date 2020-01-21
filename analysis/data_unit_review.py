@@ -51,6 +51,11 @@ def main(fp, auto_correct_file=False, fp_init=False, verbose=True):
     -----
     1. According the HEC-DSS, the available data types are 'PER-AVER',
        'PER-CUM', and 'INST-VAL'.
+    2. Correcting units in Init and SV *.dss files does not have an effect or
+       creates errors when running a CalSim study. Storage units of 'TAF
+       INST-VAL' do not seem to propogate through to the DV file, remaining in
+       units of 'TAF PER-AVER'. As a result, it is best to use this tool as a
+       pre-processor prior to visualization with the `calsim_toolkit`.
 
     """
     # Ensure passed file path is a DSS file.
