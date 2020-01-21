@@ -86,12 +86,6 @@ def main(fp, auto_correct_file=False, fp_init=False, verbose=True):
     if filter_combo.any():
         part_Bs = df.loc[filter_combo, 'Part B'].unique().tolist()
         df = join_pathname(df)
-        if auto_correct_file:
-            df['Units'] = df['Units'].str.strip()
-            df.loc[filter_stor, ['Units', 'Data Type']] = ['TAF', 'INST-VAL']
-            df.loc[filter_nonstor, 'Data Type'] = 'PER-CUM'
-            df.loc[filter_cfs, 'Data Type'] = 'PER-AVER'
-            _ = write_dss(fp, df)
         if verbose:
             print('Found values requiring unit correction.')
             first_pth = ~df.duplicated('Pathname')
@@ -108,6 +102,12 @@ def main(fp, auto_correct_file=False, fp_init=False, verbose=True):
             for v in df.loc[filter_cfs & first_pth, col].values.tolist():
                 p, u, d = v
                 print(f'{p}: "{u} {d}" -> "{u} PER-AVER"')
+        if auto_correct_file:
+            df['Units'] = df['Units'].str.strip()
+            df.loc[filter_stor, ['Units', 'Data Type']] = ['TAF', 'INST-VAL']
+            df.loc[filter_nonstor, 'Data Type'] = 'PER-CUM'
+            df.loc[filter_cfs, 'Data Type'] = 'PER-AVER'
+            _ = write_dss(fp, df.loc[filter_combo, :])
     else:
         if verbose: print('Found no variables requiring unit correction.')
         part_Bs = list()
@@ -142,5 +142,7 @@ if __name__ == '__main__':
     fp = args.fp.strip('"')
     auto_correct_file = args.correct
     fp_init = args.init
+    verbose = not auto_correct_file
     # Pass arguments to function.
-    _ = main(fp, auto_correct_file=auto_correct_file, fp_init=fp_init)
+    _ = main(fp, auto_correct_file=auto_correct_file, fp_init=fp_init,
+             verbose=verbose)
