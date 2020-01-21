@@ -182,6 +182,9 @@ class CalSimAccessor(object):
         # Return the transformed DataFrame.
         return df
 
+    def compress(self, verbose=True):
+        pass
+
     def to_dss(self, file_path, **kwargs):
         # Initialize DataFrame.
         df = self._obj.copy()

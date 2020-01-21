@@ -208,8 +208,6 @@ def AnnualExceedence(df, eom=9):
         df_exceedence = df_exceedence.reset_index()
     # Return DataFrame of annual aggregation.
     return df_exceedence
-    
-    pass
 
 
 # %% Execute script.
