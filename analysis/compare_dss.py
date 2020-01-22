@@ -81,11 +81,26 @@ def main(fp_alt0, fp_alt1, output_file='', verbose=False):
     filter_common = (min_data_change.Value > 0)
     data_change = list(min_data_change.loc[filter_common, 'Part B'].unique())
     # Output report, if applicable.
-    # <JAS> TODO: Generate a report format.
+    if output_file or verbose:
+        report = f'Variables removed from {fp_alt1} relative to {fp_alt0}.'
+        for removed_variable in removed_variables:
+            report += '\n' + removed_variable
+        report += ('\n\n'
+                   + f'Variables added to {fp_alt1} relative to {fp_alt0}.')
+        for added_variable in added_variables:
+            report += '\n' + added_variable
+        report += ('\n\n'
+                   + f'Common variables with changes in {fp_alt1}'
+                   + f' relative to {fp_alt0}.')
+        for d in data_change:
+            report += '\n' + d
     if output_file:
-        pass
+        with open(output_file, 'w') as fp:
+            fp.write(report)
+        msg = 'Successfully written report to {}'
+        print(msg.format(output_file))
     if verbose:
-        print('Report functionality currently unavailable.')
+        print(report)
     # Return data differences.
     return removed_variables, added_variables, data_change
 
@@ -118,11 +133,11 @@ if __name__ == '__main__':
                              comparison report to disk. If no path is provided,
                              the report is not written to disk.
                              ''')
-    parser.add_argument('-v', '--verbose', metavar='verbosity', type=bool,
-                        nargs='?', default=True,
+    parser.add_argument('-s', '--silent', dest='verbose', action='store_false',
+                        default=True,
                         help='''
-                             Option to display contents of comparison report to
-                             console.
+                             Option to suppress contents of comparison report
+                             to console.
                              ''')
     # Parse arguments.
     args = parser.parse_args()

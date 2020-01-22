@@ -138,7 +138,7 @@ def main(fp, auto_correct_file=False, fp_init=False, verbose=True):
        'PER-CUM', and 'INST-VAL'.
     2. Correcting units in Init and SV *.dss files does not have an effect or
        creates errors when running a CalSim study. Storage units of 'TAF
-       INST-VAL' do not seem to propogate through to the DV file, remaining in
+       INST-VAL' do not seem to propagate through to the DV file, remaining in
        units of 'TAF PER-AVER'. As a result, it is best to use this tool as a
        pre-processor prior to visualization with the `calsim_toolkit`.
 
