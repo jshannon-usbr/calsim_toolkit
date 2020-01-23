@@ -75,11 +75,11 @@ def main(fp_alt0, fp_alt1, output_file='', verbose=False):
                   end_date='2015-09-30')
     df = tidy_to_wide(df)
     diff = df['Alt1'] - df['Alt0']
-    min_data_change = diff.abs().min()
-    min_data_change.name = 'Value'
-    min_data_change = min_data_change.reset_index()
-    filter_common = (min_data_change.Value > 0)
-    data_change = list(min_data_change.loc[filter_common, 'Part B'].unique())
+    any_data_change = diff.abs().max()
+    any_data_change.name = 'Value'
+    any_data_change = any_data_change.reset_index()
+    filter_common = (any_data_change.Value > 0)
+    data_change = list(any_data_change.loc[filter_common, 'Part B'].unique())
     # Output report, if applicable.
     if output_file or verbose:
         report = f'Variables removed from {fp_alt1} relative to {fp_alt0}.'
