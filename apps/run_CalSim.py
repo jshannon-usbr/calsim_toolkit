@@ -18,32 +18,19 @@ import os
 import glob
 import json
 import subprocess as sb
+import datetime as dt
 import argparse
 # Import custom modules.
 try:
     import custom_modules
+    from clean_CalSim import clean_CalSim
     from tools.variables import external_apps_config
 except(ModuleNotFoundError):
+    from .clean_CalSim import clean_CalSim
     from ..tools.variables import external_apps_config
 
 
 # %% Define functions.
-def clean_WRIMS_dir(WRIMS):
-    """
-    Summary
-    -------
-    Function to clean the pathname for WRIMS in a readable manner for Python.
-
-    """
-    cleaned_WRIMS = WRIMS
-    if WRIMS.startswith("'") or WRIMS.startswith('"'):
-        cleaned_WRIMS = cleaned_WRIMS[1:]
-    if WRIMS.endswith("'") or WRIMS.endswith('"'):
-        cleaned_WRIMS = cleaned_WRIMS[:-1]
-    cleaned_WRIMS = os.path.realpath(cleaned_WRIMS)
-    return cleaned_WRIMS
-
-
 def WRIMS_config():
     """
     Summary
@@ -190,10 +177,10 @@ def main(lf, run_parallel=False, run_bat=True, **kwargs):
     else:
         launch_files = [lf]
     launch_files = [x for x in launch_files if 'wsi' not in x.lower()]
-    for i in range(len(launch_files)):
-        launch_files[i] = os.path.realpath(launch_files[i])
-        if not os.path.exists(launch_files[i]):
-            msg = 'Path {} does not exist'.format(launch_files[i])
+    for i, f in enumerate(launch_files):
+        launch_files[i] = os.path.realpath(f)
+        if not os.path.exists(f):
+            msg = 'Path {} does not exist'.format(f)
             raise RuntimeError(msg)
     # Run CalSim studies in parallel or sequence.
     if run_parallel:
@@ -215,11 +202,15 @@ def main(lf, run_parallel=False, run_bat=True, **kwargs):
                 file.write('\n'.join(packet))
             # Run subprocess.
             if run_bat:
+                t0 = dt.datetime.now()
                 process = sb.run(CalSim, cwd=work_dir)
+                t1 = dt.datetime.now()
                 if process.returncode != 0:
                     print('CalSim Subprocess Failed.')
                 else:
                     print('CalSim Subprocess Complete!')
+                t_process = t1 - t0
+                print('Parallel Process Time', t_process, sep=': ')
     else:
         # Connect to sequential engine.
         CalSim = os.path.join(WRIMS, r'batchrun/SequentialBatchRun.bat')
@@ -234,11 +225,23 @@ def main(lf, run_parallel=False, run_bat=True, **kwargs):
             file.write('\n'.join(launch_files))
         # Run subprocess.
         if run_bat:
+            t0 = dt.datetime.now()
             process = sb.run(CalSim, cwd=work_dir)
+            t1 = dt.datetime.now()
             if process.returncode != 0:
                 print('CalSim Subprocess Failed.')
             else:
                 print('CalSim Subprocess Complete!')
+            t_process = t1 - t0
+            print('Series Process Time', t_process, sep=': ')
+    # Clean the study of temporary processing files.
+    study_dir = list()
+    for f in launch_files:
+        s_dir = os.path.dirname(f)
+        study_dir.append(s_dir)
+    study_dir = list(set(study_dir))
+    for s in study_dir:
+        _ = clean_CalSim(s)
     # Return completion indicator.
     return 0
 
