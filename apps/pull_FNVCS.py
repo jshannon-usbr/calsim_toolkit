@@ -21,8 +21,10 @@ import argparse
 # Import custom modules.
 try:
     import custom_modules
+    from package_CalSim import obtain_DLLs, obtain_IO
     from tools.variables import external_apps_config
 except(ModuleNotFoundError):
+    from .package_CalSim import obtain_DLLs, obtain_IO
     from ..tools.variables import external_apps_config
 
 
@@ -73,12 +75,14 @@ def main(NVCS, vcs, verbose=True):
         msg = '{} is not a valid version controlled directory.'
         raise TypeError(msg.format(vcs))
     # Initialize list of files of interest.
-    file_types = ['wresl', 'table', 'launch', 'dat']
+    file_types = ['wresl', 'table', 'launch', 'dat', 'in']
     # Obtain list of all files from `NVCS`.
     text_files_NVCS = glob.glob(os.path.join(NVCS, '.project'))
     for file_type in file_types:
         f = '**/*.{}'.format(file_type)
         text_files_NVCS += glob.glob(os.path.join(NVCS, f), recursive=True)
+    bnry_files_NVCS = obtain_DLLs(NVCS)
+    bnry_files_NVCS += obtain_IO(NVCS)
     # Remove all version controlled files from `vcs`.
     git = external_apps_config(app='git')
     git_ls = git + ' ls-tree -r --name-only HEAD'
@@ -94,6 +98,21 @@ def main(NVCS, vcs, verbose=True):
         if not os.path.exists(os.path.dirname(abs_path)):
             os.makedirs(os.path.dirname(abs_path))
         shutil.copyfile(text_file, abs_path)
+    bnry_copies = list()
+    for bnry_file in bnry_files_NVCS:
+        rel_path = os.path.relpath(bnry_file, start=NVCS)
+        abs_path = os.path.join(vcs, rel_path)
+        if not os.path.exists(os.path.dirname(abs_path)):
+            os.makedirs(os.path.dirname(abs_path))
+        if os.path.exists(abs_path):
+            front, back = os.path.splitext(abs_path)
+            NVCS_study = os.path.basename(NVCS)
+            abs_path = '{}_{}{}'.format(front, NVCS_study, back)
+            shutil.copyfile(bnry_file, abs_path)
+            record = [rel_path, os.path.relpath(abs_path, start=vcs)]
+            bnry_copies.append(record)
+        else:
+            shutil.copyfile(bnry_file, abs_path)
     # Remove empty folders from `vcs`.
     failed_del = list()
     for root, dirs, files in os.walk(vcs, topdown=False):
@@ -114,6 +133,11 @@ def main(NVCS, vcs, verbose=True):
         msg = ('Successfully transferred text files from {} to {}.'
                ' Ready for review prior to commit.')
         print(msg.format('NVCS', 'vcs'))
+        if bnry_copies:
+            msg = ('Please, review the following binary files because they'
+                   ' were renamed to avoid overwriting existing files.')
+            for original_file, modified_file in bnry_copies:
+                print(original_file, modified_file, sep=' -> ')
     # Return success indicator.
     return 0
 

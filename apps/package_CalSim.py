@@ -24,36 +24,39 @@ import argparse
 # Import custom modules.
 try:
     import custom_modules
-    from clean_CalSim import clean_CalSim
     from variable_dependencies import remove_comments
     from tools.variables import external_apps_config
 except(ModuleNotFoundError):
-    from .clean_CalSim import clean_CalSim
     from .variable_dependencies import remove_comments
     from ..tools.variables import external_apps_config
 
 
 # %% Define functions.
-def win_zip(dist_name, files):
+def win_zip(dist_name):
     wzzip = external_apps_config('wzzip')
     if 'WZZIP.EXE' not in wzzip:
         msg = 'Unable to find external application "WZZIP.exe".'
         raise RuntimeError(msg)
-    fp_list = '{}.lst'.format(dist_name)
-    content = '\n'.join(files)
-    with open(fp_list, 'w') as f:
-        f.write(content)
-    wz_zip = [wzzip] + '-a -P -r -Jhrs -whs {}.zip @{}'.format(dist_name, fp_list).split()
+    wz_app = [wzzip]
+    wz_flg = '-a -P -r -Jhrs -whs'.split()
+    wz_arg = r'{}.zip {}\*.*'.format(dist_name, dist_name).split()
+    wz_zip = wz_app + wz_flg + wz_arg
     stream = sb.run(wz_zip, cwd=os.getcwd(), encoding='utf-8', stdout=sb.PIPE)
-    os.remove(fp_list)
+    shutil.rmtree(dist_name)
     return 0
 
 
-def python_zip(dist_name, files):
+def python_zip(dist_name):
     zip_fp = '{}.zip'.format(dist_name)
+    files = glob.glob(os.path.join(dist_name, '*'))
+    files = glob.glob(os.path.join(dist_name, '.*'))
+    files += glob.glob(os.path.join(dist_name, '**', '*'), recursive=True)
+    files += glob.glob(os.path.join(dist_name, '.git', '**', '*'), recursive=True)
+    files = list(set(files))
     with zipfile.ZipFile(zip_fp, 'w') as f:
         for file in files:
             f.write(file)
+    shutil.rmtree(dist_name)
     return 0
 
 
@@ -109,14 +112,14 @@ def obtain_IO(study):
     # Acquire relative paths for all I/O binary files.
     binary_paths = list()
     for binary in binaries:
-        _, b_file = os.path.split(binary)
+        b_file = os.path.basename(binary)
         b_pth = os.path.join(study, '**', b_file)
         binary_paths += glob.glob(b_pth, recursive=True)
     # Return list of DLLs.
     return binary_paths
 
 
-def main(study_dir, dist_name='', verbose=True):
+def main(study_dir, dist_name='', verbose=True, compress=True):
     """
     Summary
     -------
@@ -131,6 +134,8 @@ def main(study_dir, dist_name='', verbose=True):
         is automatically generated.
     verbose : boolean, default True, optional
         Option to allow messages to print to console.
+    compress: boolean, default True, optional
+        Option to compress study package.
 
     Returns
     -------
@@ -144,52 +149,46 @@ def main(study_dir, dist_name='', verbose=True):
     os.chdir(wd)
     if not dist_name:
         today = dt.date.today().isoformat()
-        dist_name = '{}_USBR_{}'.format(today, study)
+        dist_name = 'USBR_{}_{}'.format(study, today)
     # Initialize variables, stash changes, and add version control note.
     git = external_apps_config('git')
-    stash = True
-    no_stash = 'No local changes to save'
-    git_stash = (git + ' stash').split()
-    stream = sb.run(git_stash, cwd=study, encoding='utf-8', stdout=sb.PIPE)
-    if no_stash in stream.stdout:
-        stash = False
-    git_branch = (git + ' rev-parse --abbrev-ref HEAD').split()
-    stream = sb.run(git_branch, cwd=study, encoding='utf-8', stdout=sb.PIPE)
-    branch = stream.stdout.split('\n')[0]
-    git_commits = (git + ' rev-list HEAD').split()
-    stream = sb.run(git_commits, cwd=study, encoding='utf-8', stdout=sb.PIPE)
-    commit = stream.stdout.split('\n')[0]
-    fp_vcs = os.path.join(study, 'vcs.dyddm')
-    with open(fp_vcs, 'w') as f:
-        f.write('{} ({})'.format(branch, commit))
-    files = [fp_vcs]
-    # List all meta-data files.
-    files += glob.glob(os.path.join(study, '.project'))
-    files += glob.glob(os.path.join(study, '*.launch'))
-    files += glob.glob(os.path.join(study, '.gitignore'))
-    files += glob.glob(os.path.join(study, '.git', '**', '*'), recursive=True)
-    # List all CalSim text files.
-    files += glob.glob(os.path.join(study, '**', '*.wresl'), recursive=True)
-    files += glob.glob(os.path.join(study, '**', '*.table'), recursive=True)
-    files += glob.glob(os.path.join(study, '**', '*.dat'), recursive=True)
-    files += glob.glob(os.path.join(study, '**', '*.in'), recursive=True)
-    # List all required DLL files.
-    files += obtain_DLLs(study)
-    # List any *.class files that may be required.
+    # Clone current branch.
+    git_clone = (git + f' clone {study} {dist_name}').split()
+    if os.path.exists(dist_name):
+        msg = f'{dist_name} already exists; overwrite denied.'
+        raise RuntimeError(msg)
+    stream = sb.run(git_clone, cwd=wd, encoding='utf-8', stdout=sb.PIPE)
+    # Hide .gitignore.
+    fp = os.path.join(dist_name, '.gitignore')
+    if os.path.exists(fp):
+        p = os.popen('attrib +h ' + fp)
+        p.close()
+    else:
+        print('No .gitignore file found.')
+    # Remove remote.
+    git_rm = (git + ' remote rm origin').split()
+    stream = sb.run(git_rm, cwd=dist_name, encoding='utf-8', stdout=sb.PIPE)
+    # Acquire list of binaries.
+    files = obtain_DLLs(study)
     files += glob.glob(os.path.join(study, '**', '*.class'), recursive=True)
-    # List all I/O files.
     files += obtain_IO(study)
+    # Copy binaries to package.
+    for file in files:
+        d_path = os.path.join(dist_name, os.path.relpath(file, start=study))
+        if not os.path.exists(os.path.dirname(d_path)):
+            os.makedirs(os.path.dirname(d_path))
+        shutil.copyfile(file, d_path)
     # Zip package.
-    try:
-        _ = win_zip(dist_name, files)
-    except RuntimeError:
-        _ = python_zip(dist_name, files)
-    print(f'Successfully compressed {study} to {dist_name}.zip')
-    # Remove `fp_vcs`, pop stash, and return to original working directory.
-    os.remove(fp_vcs)
-    if stash:
-        git_stash_pop = (git + ' stash pop').split()
-        _ = sb.run(git_stash_pop, cwd=study, encoding='utf-8', stdout=sb.PIPE)
+    if compress:
+        if False: #try:
+            _ = win_zip(dist_name)
+            msg = 'Successfully compressed {} to {}.zip with WinZip.'
+            print(msg.format(study, dist_name))
+        else: #except RuntimeError:
+            _ = python_zip(dist_name)
+            msg = 'Successfully compressed {} to {}.zip with Python.'
+            print(msg.format(study, dist_name))
+    # Return to original working directory.
     os.chdir(CWD)
     # Return success indicator.
     return 0
@@ -214,10 +213,15 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--silent', dest='verbose', action='store_false',
                         default=True,
                         help='Option to suppress messages to console.')
+    parser.add_argument('-u', '--uncompressed', dest='compress',
+                        action='store_false', default=True,
+                        help='Option to suppress messages to console.')
     # Parse arguments.
     args = parser.parse_args()
     study_dir = args.study_dir.strip('"')
     dist_name = args.dist_name.strip('"')
     verbose = args.verbose
+    compress = args.compress
     # Pass arguments to function.
-    _ = main(study_dir, dist_name=dist_name, verbose=verbose)
+    _ = main(study_dir, dist_name=dist_name, verbose=verbose,
+             compress=compress)
