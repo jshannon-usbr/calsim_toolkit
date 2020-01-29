@@ -180,11 +180,11 @@ def main(study_dir, dist_name='', verbose=True, compress=True):
         shutil.copyfile(file, d_path)
     # Zip package.
     if compress:
-        if False: #try:
+        try:
             _ = win_zip(dist_name)
             msg = 'Successfully compressed {} to {}.zip with WinZip.'
             print(msg.format(study, dist_name))
-        else: #except RuntimeError:
+        except RuntimeError:
             _ = python_zip(dist_name)
             msg = 'Successfully compressed {} to {}.zip with Python.'
             print(msg.format(study, dist_name))
