@@ -323,6 +323,86 @@ def write_sqlite():
     pass
 
 
+def read_CSH_LandUse(fp, **kwargs):
+    """
+    Summary
+    -------
+    Specialize query tool for reading CalSimHydro monthly repeating time
+    series, starting at 4000-01-31.
+
+    Parameters
+    ----------
+    fp : str
+        File path (absolute or relative) of DSS file.
+    **kwargs
+        Keyword arguments to pass to `read_dss_catalog`.
+
+    Returns
+    -------
+    df : pandas.DataFrame
+        DataFrame of regular repeating time series with year as 2000 rather
+        than 4000.
+
+    """
+    # Acquire catalog of pathnames.
+    dss_cat = read_dss_catalog(fp, **kwargs)
+    # Initialize values for `dss.read_regtsd`.
+    cdate = '31Jan4000'
+    ctime = '2400'
+    # Get list of studies and file paths.
+    study_fps = transform.cat_to_study_fps(dss_cat)
+    list_df = list()
+    # Read data into DataFrame.
+    for study, f_path in study_fps:
+        # Get pathnames for current file.
+        # TODO: Issue here if adding multiple alternatives with the same file.
+        # <JAS 2019-09-17>
+        fp_filt = (dss_cat['File Path'] == f_path)
+        st_filt = (dss_cat['Study'] == study) if study else dss_cat.any(axis=1)
+        cat_filter = (fp_filt & st_filt)
+        s_pathnames = dss_cat.loc[cat_filter, 'Pathname']
+        # Query data from DSS file.
+        ifltab = dss.open_dss(f_path)[0]
+        for row in s_pathnames.index:
+            cpath = s_pathnames[row]
+            t_step = cpath.split('/')[5]
+            fq = variables.t_steps[t_step]
+            datetime = pd.date_range(start='2000-01-31', end='2000-12-31',
+                                     freq=fq, name='DateTime')
+            # TODO: Future will handle timezone information; code below.
+            # <JAS 2019-09-16>
+            # datetime = pd.date_range(start=start_date, end=end_date, freq=fq,
+                                     # name='DateTime', tz='America/Los_Angeles')
+            nvals = datetime.size
+            df_temp = pd.DataFrame(datetime, columns=['DateTime'])
+            if study: df_temp['Study'] = study
+            dss_data = dss.read_regtsd(ifltab, cpath, cdate, ctime, nvals)
+            df_temp['Pathname'] = cpath
+            df_temp['Units'] = dss_data[2].upper()
+            df_temp['Data Type'] = dss_data[3].upper()
+            df_temp['Value'] = list(dss_data[1])
+            list_df.append(df_temp.copy())
+        dss.close_dss(ifltab)
+        df = pd.concat(list_df)
+    # NOTE: Legacy code below handles meta-data.
+    # <JAS 2019-09-13>
+    if False:
+        coords_info = dss_ret[7]
+        supp_info = [cpath, fp, dss_ret[6], coords_info['X_Long'],
+                     coords_info['Y_Lat'], coords_info['CoordSys'][0],
+                     coords_info['Datum'][0], coords_info['DatumUnit'][0],
+                     dss_ret[8], dss_ret[11].value]
+        df_meta_temp = pd.Series(supp_info, index=meta_col).to_frame().T
+        df_meta = pd.concat([df_meta, df_meta_temp])
+        df_meta.reset_index(drop=True, inplace=True)
+        df_meta = df_meta.infer_objects()
+    # Replace DSS missing value indicators with NaN and reset indices.
+    df['Value'].replace([-901, -902], np.nan, inplace=True)
+    df.reset_index(drop=True, inplace=True)
+    # Return DataFrame.
+    return df
+
+
 # %% Execute script.
 if __name__ == '__main__':
     msg = ('This module is intended to be imported for use into another'
