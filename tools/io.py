@@ -285,6 +285,10 @@ def write_dss(fp, df):
             cpath = pathname
             cdate = df_pathname['DateTime'].dt.strftime('%d%b%Y').values[0]
             ctime = df_pathname['DateTime'].dt.strftime('%H%M').values[0]
+            # NOTE: The code below is optimized for monthly timestep. Recommend
+            #       reviewing `pyhecdss` to address solution.
+            if ctime == '0000':
+                ctime = '2400'
             vals = df_pathname['Value'].to_list()
             cunits = df_pathname['Units'].values[0]
             ctype = df_pathname['Data Type'].values[0]
